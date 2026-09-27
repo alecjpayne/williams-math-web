@@ -2,7 +2,7 @@
 
 This project is a proposed mathematics department website. The shared review site is:
 
-https://mark-hopkins-at-williams.github.io/williams-math-web/
+https://alecjpayne.github.io/williams-math-web/
 
 The existing Williams website at `hub.williams.edu/math` and the `math.williams.edu` redirect are separate. This project's preview work does not require changing either of them. Moving the approved site to `math.williams.edu` will be a later deployment decision with the Williams web administrator.
 
