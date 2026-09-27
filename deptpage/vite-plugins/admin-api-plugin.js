@@ -36,7 +36,6 @@ const IMAGE_SUBFOLDERS = new Set([
   'colloquium',
   'students',
   'courseicons',
-  'wics',
 ])
 
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'])

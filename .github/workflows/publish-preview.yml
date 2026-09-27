@@ -1,0 +1,59 @@
+# Proposed preview-only workflow. A repository administrator must enable
+# GitHub Actions publishing in Settings > Pages and allow the source branch
+# in the github-pages environment before this can deploy.
+name: Build and publish math preview
+
+on:
+  push:
+    branches: [source]
+  pull_request:
+    branches: [source]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: math-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install project packages
+        working-directory: deptpage
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build the preview website
+        working-directory: deptpage
+        env:
+          PREVIEW_OUT_DIR: ${{ runner.temp }}/math-preview
+        run: npm run deploy:preview
+      - name: Package the preview for Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/source'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/math-preview
+
+  deploy:
+    name: Publish shared preview
+    if: github.event_name == 'push' && github.ref == 'refs/heads/source'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

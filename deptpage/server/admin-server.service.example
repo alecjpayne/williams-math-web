@@ -1,15 +1,17 @@
-# Template for a per-user systemd service running the admin panel on jersey.
+# Optional template for a future authenticated mathematics editing server.
+# This is not used by GitHub Pages and has not been deployed for this project.
+# An administrator must choose the server, account, project path and Node setup.
 #
-# One-time setup on jersey (as ephs, no root needed):
-#   loginctl enable-linger              # survive logout/reboot (confirmed working, no root)
+# Example setup on the chosen Linux server, subject to its administrator's policy:
+#   loginctl enable-linger              # may require administrator assistance
 #   node server/set-password.mjs <username>
 #   mkdir -p ~/.config/systemd/user
 #   cp server/admin-server.service.example ~/.config/systemd/user/admin-server.service
 #   systemctl --user daemon-reload
 #   systemctl --user enable --now admin-server.service
 #
-# Then from your laptop:
-#   ssh -L 8043:127.0.0.1:8043 ephs@jersey.cs.williams.edu
+# Then from your laptop (substitute the account and server chosen above):
+#   ssh -L 8043:127.0.0.1:8043 USER@EDITING_SERVER
 #   open http://localhost:8043/login
 #
 # Logs: journalctl --user -u admin-server -f
@@ -19,7 +21,7 @@ Description=Math Dept Admin Panel
 After=network.target
 
 [Service]
-WorkingDirectory=%h/www/deptpage
+WorkingDirectory=%h/williams-math-web/deptpage
 ExecStart=/bin/npm run dev -- --host 127.0.0.1 --port 8043 --strictPort
 Restart=on-failure
 RestartSec=5

@@ -1,44 +1,46 @@
 #!/bin/sh
 # Builds the site for the GitHub Pages review copy at
 # https://mark-hopkins-at-williams.github.io/williams-math-web/ and assembles
-# it in ../../williams-math-web-preview, a separate git checkout that is
-# pushed to that repo. Unlike `npm run deploy`, this never touches the
-# production files at the repo root.
+# it in ../../williams-math-web-preview (or PREVIEW_OUT_DIR). Historically,
+# that directory was a checkout of the same repository's main branch.
+# The proposed GitHub Actions workflow uploads this output directly to Pages.
+# This script builds files locally; it does not push or publish them.
 #
 # The preview lives under a /williams-math-web/ subpath, so the 404.html
 # client-redirect trick has to keep that first path segment, and robots.txt
 # blocks indexing so search engines don't pick up an unofficial copy.
 set -e
+cd "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 BASE=/williams-math-web/
-OUT=../../williams-math-web-preview
+OUT=${PREVIEW_OUT_DIR:-../../williams-math-web-preview}
 
-npx vite build --base=$BASE --outDir dist-preview
+node ./node_modules/vite/bin/vite.js build --base="$BASE" --outDir dist-preview
 
-mkdir -p $OUT
-rm -rf $OUT/assets $OUT/images $OUT/articles
-cp -R dist-preview/assets $OUT/assets
-cp -R -L images $OUT/images
-cp -R -L articles $OUT/articles
-find $OUT -name .DS_Store -delete
+mkdir -p "$OUT"
+rm -rf "$OUT/assets" "$OUT/images" "$OUT/articles"
+cp -R dist-preview/assets "$OUT/assets"
+cp -R -L images "$OUT/images"
+cp -R -L articles "$OUT/articles"
+find "$OUT" -name .DS_Store -delete
 
 # index.html: restore the route that 404.html encoded into the query string,
 # re-prefixed with the subpath.
 sed 's#decoded.shift() + (decoded.length#l.pathname.slice(0, -1) + decoded.shift() + (decoded.length#' \
-  dist-preview/index.html > $OUT/index.html
+  dist-preview/index.html > "$OUT/index.html"
 
 # Give every top-level route a real index.html (e.g. about-us/index.html) so
 # direct links return 200 instead of going through the 404.html redirect --
 # otherwise crawlers that don't run JavaScript see every page as a 404.
-# (Production can't do this: per-route directories conflict with the
-# .htaccess rewrites on jersey. See README.) Routes are read from the hidden
+# (A future Apache deployment should use its own rewrite configuration.)
+# Routes are read from the hidden
 # crawler nav in index.html, which is kept in sync with src/App.jsx.
-for route in $(grep -o "href=\"${BASE}[a-z-]*/\"" $OUT/index.html | sed "s#href=\"${BASE}##; s#/\"##"); do
+for route in $(grep -o "href=\"${BASE}[a-z-]*/\"" "$OUT/index.html" | sed "s#href=\"${BASE}##; s#/\"##"); do
   rm -rf "$OUT/$route"
   mkdir -p "$OUT/$route"
   cp $OUT/index.html "$OUT/$route/index.html"
 done
 
-cat > $OUT/404.html <<'EOF'
+cat > "$OUT/404.html" <<'EOF'
 <!DOCTYPE html>
 <html>
   <head>
@@ -65,7 +67,7 @@ cat > $OUT/404.html <<'EOF'
 </html>
 EOF
 
-printf 'User-agent: *\nDisallow: /\n' > $OUT/robots.txt
-touch $OUT/.nojekyll
+printf 'User-agent: *\nDisallow: /\n' > "$OUT/robots.txt"
+touch "$OUT/.nojekyll"
 rm -rf dist-preview
-echo "Preview assembled in $(cd $OUT && pwd)"
+echo "Preview assembled in $(cd "$OUT" && pwd)"

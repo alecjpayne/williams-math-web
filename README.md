@@ -1,309 +1,112 @@
-# Staging Ground for the Williams Mathematics Department Webpage
+# Williams mathematics website preview
 
-This repository provides code for updating and deploying the homepage for the Williams College Mathematics Department.
+This project is a proposed mathematics department website. The shared review site is:
 
+https://mark-hopkins-at-williams.github.io/williams-math-web/
 
-## Editing content: use the Admin Panel
+The existing Williams website at `hub.williams.edu/math` and the `math.williams.edu` redirect are separate. This project's preview work does not require changing either of them. Moving the approved site to `math.williams.edu` will be a later deployment decision with the Williams web administrator.
 
-To make the webpage easier to update and maintain, much of the content is separated from the Javascript code, as plain JSON/Markdown files under `deptpage/data/` and `deptpage/articles/`. You *can* hand-edit those files directly (see the [Content data reference](#content-data-reference) below for the format of each one), but the recommended way to add or change content is the built-in admin panel, which covers every content type below plus image upload and Markdown editing, and handles rebuilding/publishing for you.
+## Editing with colleagues
 
-There are two places to reach it:
+Start with [COLLABORATING.md](COLLABORATING.md). It explains the browser-only editing workflow and the few GitHub terms editors need.
 
-* **Locally**, for drafting or previewing changes before they go live: run `npm install` then `npm run dev` from `deptpage/`, and open `/admin` in the dev server. It's a dev-only route (stripped entirely from the production build) and requires no login on your own machine.
-* **Live**, on `jersey.cs.williams.edu`: a persistent copy of the same admin UI runs there as the `ephs` user, gated behind a login (username `webmaster`) and reachable only via SSH tunnel — it isn't exposed to the internet:
+The repository has two branches with different purposes:
 
-  ```
-  ssh -L 8043:127.0.0.1:8043 ephs@jersey.cs.williams.edu
-  ```
+- `source` contains the editable React/Vite project, article text, images, and page data. Make content and code changes here, usually through a small working branch and a pull request targeting `source`.
+- `main` contains generated website files used by the existing GitHub Pages preview. Do not merge the source tree into this branch or treat its article copies as the editable master.
 
-  then visit `http://localhost:8043/login`.
+As inspected on September 27, 2026, GitHub publishes `main`, and the repository has no workflow to rebuild the website when `source` changes. This local revision proposes `.github/workflows/publish-preview.yml`, which builds `source` and publishes its output directly through GitHub Pages. That proposal requires an administrator to activate it; saving these files locally does not enable it. See [PREVIEW-SETUP.md](PREVIEW-SETUP.md).
 
-In either case: edits **Save** to the local JSON/Markdown files, but that alone doesn't change what visitors see, since most content is bundled into the JS at build time. Use the **Publish to live site** button to commit, rebuild, and (best-effort) push the change — that's the step that actually makes it live.
+## Local editing
 
-A handful of things aren't exposed in the admin forms yet (e.g. a course catalog entry's `icon`) — for those you'll still need to hand-edit the JSON as described below.
+Use Node.js 24 LTS. From `deptpage/`:
 
-## Content data reference
-
-Below, `photo`/`icon` paths are root-relative (e.g. a file at `deptpage/images/misc/photo.png` is referenced as `/images/misc/photo.png`), while `article` paths are relative to the `deptpage` directory (e.g. `articles/ssr.md`).
-
-### Modifying the spotlight photo on the front page:
-
-1. Put a **landscape photo** in the `deptpage/images/misc/` directory.
-
-2. Update the `photo` field of the `spotlight` object in `deptpage/data/frontpage.json` to point to the file. The path should be rooted at the `deptpage` directory, e.g. if the photo is called `photo.png`, then the path would be `/images/misc/photo.png`.
-
-3. Update the `caption` field of the `spotlight` object in `deptpage/data/frontpage.json` with an appropriate caption.
-
-### Adding a person to the About Us page:
-
-1. Put a square photo (most formats are supported, but certainly JPG or PNG will work) of the person in the `deptpage/images/people/` directory.
-
-2. Add a new item to the `people` field of `deptpage/data/people.json`. Here is an example:
-
+```sh
+npm ci --ignore-scripts
+npm run dev -- --host 127.0.0.1
 ```
+
+Open the address printed in the terminal. The editor is at `/admin` on that same address. Save writes files on the computer running the editor; refresh the website tab to see changes.
+
+If native file watching fails, the additional configuration supplied with this local revision uses polling:
+
+```sh
+npm run dev -- --config vite.local.config.js
+```
+
+On a Mac with dependencies already installed, `Start Local Website.command` starts that configuration. The launcher can use an existing Codex Node.js runtime or a normal `node` command. It does not install dependencies or publish online. See [LOCAL-PREVIEW.md](LOCAL-PREVIEW.md).
+
+The editor's existing **Publish to live site** button is a legacy single-server operation: it commits local content, runs `npm run deploy` on that machine, and tries to push to its configured Git remote. It is not the GitHub preview workflow. Use Save for local editing and submit the changed source files through GitHub.
+
+GitHub Pages serves the built site. It does not run the editor's Node.js backend. A shared form-based editor would need a separately hosted, authenticated editing service.
+
+## Where content lives
+
+| Content | File or folder |
+| --- | --- |
+| Article bodies | `articles/*.md` |
+| Home page welcome text | `articles/welcome.md` |
+| Home page headings, spotlight, caption | `deptpage/data/frontpage.json` |
+| News titles, dates, teasers, article links | `deptpage/data/news.json` |
+| People | `deptpage/data/people.json` |
+| Courses and offerings | `deptpage/data/courses.json` |
+| Colloquium events | `deptpage/data/colloquium.json` |
+| Major requirements and planning paths | `deptpage/data/major.json` |
+| Other pages | `deptpage/data/about.json`, `nonmajors.json`, `research.json`, `students.json` |
+| Photos and other images | `images/` |
+| Components and styling | `deptpage/src/` |
+
+`deptpage/articles` and `deptpage/images` are links to the root folders. They are not separate copies. Use the root folders when editing through GitHub.
+
+### Articles and news
+
+Edit an existing Markdown file for a text change. To add a news item, create its article file and add an entry to the `articles` array in `deptpage/data/news.json`. For example, the existing AWM item uses:
+
+```json
 {
-    "id": "Mark Hopkins",
-    "photo": "/images/people/mark.jpg",
-    "role": "faculty",
-    "title": "Assistant Professor",
-    "webpage": "https://markandrewhopkins.com/",
-    "interests": "Machine learning, machine translation, low-resource natural language processing"  
+    "id": "article-awm-meet-greet-2026",
+    "date": "September 22, 2026",
+    "title": "AWM Student Chapter Meet & Greet, Thursday 9/24 at 2-3pm",
+    "thumbnail": "/images/misc/awm-logo-thumb-lavender.jpg",
+    "article": "articles/awm-meet-greet-2026.md",
+    "teaser": "Join the AWM Student Chapter for its first Meet & Greet of the year in the Frank Morgan Library!"
 }
 ```
 
-The `id` is just the person's name. The `role` should be `faculty`, `staff`, `emeriti`, or `affiliate` (for affiliated faculty from other departments who also teach CS courses). You can omit the `webpage` field or `interests` field if not applicable. All other fields are mandatory. Paths are rooted at the `deptpage` directory, e.g. a photo at `deptpage/images/people/mark.jpg` is written as `/images/people/mark.jpg`.
+Each ID should be unique. `article` points to a Markdown file. Optional `photo` and `thumbnail` point to images; the thumbnail should be square. An article file by itself does not add a link to the site's news listing.
 
+### Page content blocks
 
-### Adding a course offering to the Courses page:
+Several page data files contain a `content` array. A text block specifies an article and optionally a heading or photo:
 
-1. Add a new item to the `sections` field of `deptpage/data/courses.json`. Here is an example:
-
-```
+```json
 {
-    "id": "f26-csci136-2",
-    "course": "CSCI 136",
-    "semester": "Fall 2026",
-    "sectionNumber": "2",
-    "instructors": [
-        "James Bern"
-    ],
-    "lecture": "MWF 10-1050am",
-    "webpage": "https://catalog.williams.edu/CSCI/detail/?strm=1253&cn=136&crsid=010803"
+    "title": "welcome to mathematics at williams!",
+    "article": "articles/welcome.md"
 }
 ```
 
-The `id` should be unique (the admin panel generates it automatically as `<semester-code>-<course-code>-<sectionNumber>`, e.g. `f26-csci136-2`, from the fields below it — match that format if adding one by hand). The `course` field should match one of the course ids in the `catalog` field of `deptpage/data/courses.json` (see the next step for how to add new courses). The `instructors` field is a list of the instructors for that section (matched against `id`s in `deptpage/data/people.json`). All fields are mandatory, including the `webpage` field (typically this should be the official course homepage, but if that doesn't exist, then just use the Williams Catalog page for that section).
+Blocks appear in array order. Entries with a `component` field identify built-in React components; retain them unless changing the page implementation.
 
-2. If the course is not yet part of the `catalog` field, then you must add it. Each course in the `catalog` field should have the following form:
+### People, courses, and events
 
-```
-{
-    "id": "CSCI 104",
-    "title": "Data Science and Computing for All",
-    "icon": "/images/courseicons/icon-cs104.png",
-    "description": "Many of the world's greatest discoveries..."
-}
-```
+Use the editor's corresponding forms where convenient. For direct file edits, match the structure of a current record in the relevant JSON file. Preserve unique IDs and the references between course offerings, catalog entries, and people. Photos go in the appropriate `images/` subfolder and are referenced as `/images/...`.
 
-If there is no icon (Iris made all the original icons), then just create some arbitrary square image, preferably a circular logo with a transparent background, then add it to the `deptpage/images/courseicons` directory. (The `icon` field isn't exposed in the admin panel's course catalog form, so new/changed icons currently need to be set by hand-editing this file.)
+Course catalog icons are set in `deptpage/data/courses.json`; the current catalog form does not expose that field. `images/courseicons/icon-math.png` is an existing mathematics icon.
 
-### Adding an event to the Colloquium page:
+The major planning assistant uses `requirements` and `paths` in `deptpage/data/major.json`. Prerequisites must match existing requirement IDs. Study-away advice is in `articles/study-away.md`; there is no separate study-away equivalency data file in this project.
 
-1. Put a **square** photo (any format, but typically JPG or PNG) of the speaker (or some other image representing the event) in the `deptpage/images/colloquium/` directory.
+Academic content can legitimately mention computing, affiliated faculty, or research in other subjects. These references should be reviewed for accuracy rather than removed as template boilerplate.
 
-2. Add a new item to the `events` field of `deptpage/data/colloquium.json`. Here is an example:
+## Build commands
 
-```
-{
-    "date": "May 3, 2024",
-    "speaker": "Melanie Subbiah",
-    "affiliation": "Columbia University",
-    "title": "How did we get here? The Rise of Large Language Models and the Problem of Evaluation",
-    "location": "Bronfman Auditorium",
-    "time": "1pm",
-    "photo": "/images/colloquium/subbiah.jpeg",
-    "abstract": "Large Language Models (LLMs) have permeated almost every field..."
-}
-```
+From `deptpage/`:
 
-The `location` and `time` fields are optional (if not provided, the default values are `TCL 123` and `2:35pm`). All other fields are mandatory. The `date` field needs to be automatically parsed, so make sure there are no typos.
+- `npm run dev` starts the local development server and editor.
+- `npm run build` builds the app into `dist/`; it does not publish it.
+- `npm run preview` previews that app build locally. The full GitHub preview also needs the separate articles and images.
+- `npm run deploy:preview` assembles the complete GitHub Pages preview, including articles, images, the project URL prefix, and page-route files. By default its output is `../../williams-math-web-preview`; `PREVIEW_OUT_DIR` can select a different output directory. The command does not upload anything.
+- `npm run lint` runs the existing code lint rules.
+- `npm run deploy` is the legacy root-directory build operation used by the old editor button. It replaces generated files in the parent project folder and is not part of the proposed review-site workflow.
 
-### Adding an article to the News page:
-
-1. Create a Markdown file in the `deptpage/articles/` directory that contains the body of the article (see `deptpage/articles/purdue-data.md` for an example).
-
-2. If the article has an associated photo, then put this photo in the `deptpage/images/misc/` directory.
-
-3. Add a new item to the `articles` field of `deptpage/data/news.json`. Here is an example:
-
-```
-    {
-        "id": "article-purdue-data",
-        "date": "December 5, 2023",
-        "title": "Williams CS Majors Place 3rd in Purdue Data 4 Good Competition",
-        "photo": "/images/misc/purdue-data.jpg",
-        "thumbnail": "/images/misc/purdue-data-thumb.jpg",
-        "article": "articles/purdue-data.md",
-        "teaser": "Williams CS Majors get third place in a data science competition!"            
-    }
-```
-
-The `id`s of all articles should be unique. The `teaser` is what shows up when this article is advertised on the main homepage. You can omit the `teaser` if you want to just use the `title` as the `teaser`. The `photo` can also be omitted. All other fields are mandatory.
-
-The `thumbnail` field is optional and should be a **square** photo. When this article is the most recent one, it's used as a small preview image in the "department news" widget on the front page. If omitted, that widget just shows the teaser text, same as before this field existed.
-
-
-### Modifying information on the Student Life page:
-
-1. To update the board members of the various student organizations, first add a **square** photo of the board member to the `deptpage/images/students` directory. Then add a new item to the `leadership` field of the relevant group in `deptpage/data/students.json`. Here is an example:
-
-```
-{
-    "name": "Ye Shu",
-    "year": "2024",
-    "photo": "/images/students/shu.jpeg"
-}
-```
-
-2. Other information can also be changed by modifying `deptpage/data/students.json`, like the webpage or description of a student group.
-
-
-### Adding a content block (Front Page, Research Opportunities, Non-Majors, Plan Your Major):
-
-`deptpage/data/frontpage.json`, `research.json`, `nonmajors.json`, and `major.json` all render their body out of a shared `content` array of "blocks", each either a piece of writing or a hardcoded React component:
-
-1. Create a Markdown file in the `deptpage/articles/` directory that contains the block's text (see `deptpage/articles/ssr.md` for an example).
-
-2. If the block has an associated photo, put it in the `deptpage/images/misc/` directory.
-
-3. Add a new item to the `content` field of the relevant data file. Here is an example, from `deptpage/data/research.json`:
-
-```
-{
-    "title": "Summer Science Research",
-    "photo": "/images/misc/kayaking.jpg",
-    "article": "articles/ssr.md"
-}
-```
-
-`title` and `photo` are both optional (`photo` is rendered below the title). `article` is mandatory. Blocks appear on the page in the order they appear in the `content` array.
-
-You'll also see entries shaped like `{"component": "FromTheDepartment"}` or `{"component": "MajorPlanningAssistant"}` mixed into some of these `content` arrays — those are hardcoded React widgets wired up in the corresponding page's code, not something to add or copy by hand.
-
-### Adding pre-approved study away courses to the Plan Your Major page:
-
-1. Add a new item to the `equivalents` field of `deptpage/data/studyaway.json`. Here is an example:
-
-```
-{
-    "program": "AIT Budapest",
-    "course": "Algorithms and Data Structures",
-    "cs_equiv": "256",
-    "math_equiv": 0
-}
-```
-
-All fields are mandatory. The `cs_equiv` field should have one of the following values: 
-
-* `"no"` (if the course does not satisfy any CSCI major requirement) 
-* `"3xx"` (if the course counts as a CSCI elective but there is no exact correspondent at Williams)
-* the Williams CSCI course number (e.g. `"256"` in the above example) that corresponds to the study away course.
-
-The `math_equiv` should be either `1` (if the course satisfies the Math elective requirement of the CS major) or `0` (if not).
-
-### Modifying the Major Planning Assistant on the Plan Your Major page:
-
-1. Each major requirement is specified using the following format under the `requirements` field in `deptpage/data/major.json`:
-
-```
-{
-    "id": "CSCI 3xx(1)",
-    "title": "Computer Science Elective 1",
-    "info": "A course chosen from 300- or 400-level courses in Computer Science.",
-    "prereqs": [
-        "CSCI 136"
-    ],
-    "error": "All electives have 136 as a prerequisite.",
-    "recommended": [
-        "CSCI 237",
-        "CSCI 256"
-    ],
-    "warning": "Most electives have either 237 or 256 as a prerequisite."   
-}
-```
-
-* The `id` field should be a unique identifier for the major requirement and the `title` field is a human-friendly summary of the requirement. Both fields are mandatory.
-
-* The `info` field is a description of the major requirement that will be displayed to the student if they click on that requirement. This field is mandatory.
-
-* The `prereqs` field is a list of the `id`s of the prerequisites. They must exactly match (including case) the `id` field of the prerequisite requirement. The list is treated as a conjunction, i.e. the student must have taken **all** the courses prior to enrolling in the major requirement. If not, then the text in `error` field will be displayed to the student. Both the `prereqs` and `error` fields are optional.
-
-* The `recommended` field is a list of the `id`s of recommended previous courses. It is treated as a disjunction, i.e. the student is recommended to have taken **at least one** of these courses prior to enrolling in the major requirement. If not, then the text in `warning` field will be displayed to the student. Both the `recommended` and `warning` fields are optional.
-
-2. Each of the example paths through the major is specified using the following format under the `paths` field in `deptpage/data/major.json`:
-
-```
-{
-    "id": "accelerated",
-    "icon": "🚀",
-    "description": "you want to major in CS and you have prior experience",
-    "path": [
-        {
-            "semester": "0",
-            "courses": [
-                "CSCI 134"
-            ]
-        },
-        {
-            "semester": "1a",
-            "courses": [
-                "CSCI 136",
-                "MATH 200"
-            ]
-        },
-        {
-            "semester": "1b",
-            "courses": [
-                "CSCI 237"
-            ]
-        },
-        {
-            "semester": "2a",
-            "courses": [
-                "CSCI 256",
-                "MATH 2xx"
-            ]
-        },
-        {
-            "semester": "2b",
-            "courses": [
-                "CSCI 3xx(1)"
-            ]
-        },
-        {
-            "semester": "3a",
-            "courses": [
-                "CSCI 334/361"
-            ]
-        },
-        {
-            "semester": "3b",
-            "courses": [
-                "CSCI 3xx(2)"
-            ]
-        },
-        {
-            "semester": "4a",
-            "courses": [
-                "CSCI 3xx(3)"
-            ]
-        },
-        {
-            "semester": "4b",
-            "courses": [
-                "CSCI 3xx(4)"
-            ]
-        }
-    ]        
-}
-```
-
-* The `id` field should be a human-friendly name for the major path.
-* The `icon` field should be a single emoji that visually represents the major path.
-* The `description` field should be a short description of the major path.
-* The `path` field is a list of 9 semesters and the major requirements taken during each of them. Semester 0 is not displayed to the user -- it is used to specify requirements that a student has satisfied prior to coming to Williams. The requirements should be specified using the value of the requirement's `id` field.
-
-All fields are mandatory.
-
-## Development
-
-From the `deptpage/` directory:
-
-* `npm install` — install dependencies.
-* `npm run dev` — start the Vite dev server (this is also where the local `/admin` panel lives).
-* `npm run lint`
-* `npm run build` — production build to `deptpage/dist/`.
-* `npm run preview` — locally preview a production build.
-* `npm run deploy` — builds the site, then copies the build output over the GitHub Pages files at the repo root (`../index.html`, `../assets`). Interior routes (e.g. `/courses/`) rely on the `404.html` client-redirect trick rather than having their own prerendered directory — the repo root is shared with the live bull/jersey deployment, and a physical directory per route was conflicting with its `.htaccess` rewrite rules. This is what the live admin panel's **Publish to live site** button runs on `jersey.cs.williams.edu`; you shouldn't normally need to run it yourself.
-* `npm run build:ephs` — the same build, but under the `/~ephs/` base path. Left over from when the site was served from that userdir subpath; not used now that `cs.williams.edu` serves the site directly from the repo root.
-
+The optional Linux service example in `deptpage/server/` is a generic template, not an active mathematics editing server. No server name, account, or production publishing location is assumed.

@@ -20,7 +20,7 @@ const semesterCode = (semester) => {
   return `${season[0].toLowerCase()}${year.slice(-2)}`
 }
 
-// e.g. "CSCI 134" -> "csci134".
+// e.g. "MATH 150" -> "math150".
 const courseCode = (course) => (course || '').toLowerCase().replace(/\s+/g, '')
 
 export const sectionsSchema = {
@@ -28,7 +28,7 @@ export const sectionsSchema = {
   arrayPath: 'sections',
   idField: 'id',
   label: 'Course Section',
-  // id is an internal key (e.g. "f26-csci134-1"), not something to type by
+  // id is an internal key (e.g. "f26-math150-1"), not something to type by
   // hand -- generate it from the fields that already spell it out.
   generateId: (record) => `${semesterCode(record.semester)}-${courseCode(record.course)}-${record.sectionNumber}`,
   fields: [

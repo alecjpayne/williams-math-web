@@ -18,7 +18,7 @@ const maxColloquiaToShow = 10;
 
 // Data files hardcode asset paths as site-root-absolute (e.g. "/images/...")
 // so that they resolve the same from any route depth. That assumption breaks
-// when the app is served from a subpath (e.g. /~ephs/) instead of the
+// when the app is served from a subpath (e.g. /williams-math-web/) instead of the
 // domain root, so rewrite them here, once, to be relative to Vite's BASE_URL.
 // This is value-based (not key-based) so it also catches array fields like
 // "gallery", not just single-image "photo"/"icon" fields.
